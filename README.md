@@ -10,7 +10,7 @@ Installation Instructions
 
 Make sure you download the submodules by adding the `recursive` flag to the clone command:
 
-    git clone --recursive https://github.com/ekg/glia.git
+    git clone --recursive https://github.com/sstadick/glia.git
 
 Then build with a call to make:
 
