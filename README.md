@@ -19,6 +19,16 @@ Then build with a call to make:
 
 You'll need cmake to compile bamtools, which is a submoduled dependency.  ZLIB is also required, but is typically installed system-wide on development servers.
 
+Notes
+--------
+- Glia is case sensitive. So your reference and read sequences must be in the same case otherwise you will get an error that looks like
+    error:[gssw] Stuck in main matrix!
+
+    glia: src/gssw.c:1199: gssw_alignment_trace_back_byte: Assertion `0' failed.
+
+    Aborted (core dumped)
+
+
 Example usage
 --------
 
