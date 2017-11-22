@@ -144,11 +144,6 @@ gswalign(gssw_graph* graph,
     for (int i = 0; i < gm->cigar.length; ++i) {
         gssw_node* n = gm->cigar.elements[i].node;
         gssw_cigar* c = gm->cigar.elements[i].cigar;
-        // Change 'N' and 'X' operators to 'M'
-        // N is being calculated oddly in gssw, and is treated like M
-        if (c->type == 'N' || c->type == 'X') {
-            c->type = 'M';
-        }
         Cigar graph_relative_cigar = Cigar(c);
 
         //Cigar& ref_relative_cigar = cigars.at(n->id);
