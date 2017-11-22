@@ -146,8 +146,8 @@ gswalign(gssw_graph* graph,
         gssw_cigar* c = gm->cigar.elements[i].cigar;
         // Change 'N' and 'X' operators to 'M'
         // N is being calculated oddly in gssw, and is treated like M
-        if (c.type == 'N' || c.type == 'X') {
-            c.type = 'M';
+        if (c->type == 'N' || c->type == 'X') {
+            c->type = 'M';
         }
         Cigar graph_relative_cigar = Cigar(c);
 
