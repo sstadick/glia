@@ -867,7 +867,13 @@ void realign_bam(Parameters& params) {
                 alignment = originalAlignment;
 
             }
-        } // End if shouldRealign
+        } else {
+            if (params.debug) {
+                cerr << alignment.Name << " was not realigned." << endl;
+            }
+            has_realigned = false;
+            alignment = originalAlignment;
+        }// End if shouldRealign
 
         // ensure correct order if alignments move
         long int maxOutputPos = initialAlignmentPosition - dag_window_size;
