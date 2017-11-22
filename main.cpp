@@ -592,7 +592,7 @@ void realign_bam(Parameters& params) {
                 }
 
             }
-            variants_in_dag = variants.empty();
+            variants_in_dag = !variants.empty();
             //cerr << "dag_start_position " << dag_start_position << endl;
             ref = reference.getSubSequence(seqname,
                                            max((long int) 0, dag_start_position),
