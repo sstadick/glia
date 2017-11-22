@@ -485,6 +485,7 @@ void realign_bam(Parameters& params) {
     int total_reads = 0;
     int total_realigned = 0;
     int total_improved = 0;
+    bool variants_in_dag = false;
     bool emptyDAG = false; // if the dag is constructed over empty sequence
                            // such as when realigning reads mapped to all-N sequence
     if (params.debug) {
@@ -518,7 +519,6 @@ void realign_bam(Parameters& params) {
 
         BamAlignment originalAlignment = alignment;
         long unsigned int initialAlignmentPosition = alignment.Position;
-        bool variants_in_dag = false;
         //if (dag_start_position == 1) {
         //    dag_start_position = max(1, (int)initialAlignmentPosition - dag_window_size/2);
         //}
