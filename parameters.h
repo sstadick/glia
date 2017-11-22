@@ -24,11 +24,11 @@ int levenshteinDistance(const std::string source, const std::string target);
 
 // Command line parameters Class
 class Parameters {
-    
+
     friend ostream &operator<<(ostream &out, const Parameters &p);
-    
+
 public:
-    
+
     // i/o parameters:
     string read_input;           // -s --sequence
     string fastq_file;          // -q --fastq-file
@@ -44,6 +44,7 @@ public:
     bool flatten_alignments;
     int flatten_flank;
     bool flat_input_vcf;
+    bool variants_only;
 
     // realignment parameters
     int dag_window_size;
@@ -53,12 +54,12 @@ public:
     int mism;
     int gap_open;
     int gap_extend;
-    
+
     // functions
     Parameters(int argc, char ** argv);
     void usage(char ** argv);
     void simpleUsage(char ** argv);
-    
+
     //reporting
     string commandline;
 
