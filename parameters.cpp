@@ -162,7 +162,7 @@ void Parameters::usage(char** argv) {
         << "    -O --only-realigned        Emit only realigned records (debugging)." << endl
         << "    -n --flatten-flank N       Use this many bp of dummy sequence when flattening large" << endl
         << "                               insertions into reference coordinates (default: 2)" << endl;
-        << "    -V --variants-only         Realign only reads that have variants within their DAG" << endl
+        << "    -V --variants-only         Realign only reads that have variants within their DAG" << endl;
 }
 
 
