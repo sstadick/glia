@@ -664,11 +664,6 @@ void realign_bam(Parameters& params) {
             }
         }
         // Added check to see if there are any variants in the DAG, if not, skip the realign
-        if (params.debug) {
-            cerr << "Variants only is " << params.variants_only << endl;
-            cerr << "Variants in the DAG: " << variants_in_dag << endl;
-        }
-
         bool depend_on_variants;
         if (params.variants_only && variants_in_dag) {
             depend_on_variants = true;
@@ -676,6 +671,11 @@ void realign_bam(Parameters& params) {
             depend_on_variants = false;
         } else { // we don't care anyways
             depend_on_variants = true;
+        }
+        if (params.debug) {
+            cerr << "Variants only is " << params.variants_only << endl;
+            cerr << "Variants in the DAG: " << variants_in_dag << endl;
+            cerr << "Overall variants allowability: " << depend_on_variants << endl;
         }
         if (!emptyDAG && shouldRealign(alignment, ref, dag_start_position, params, stats_before) && depend_on_variants) {
 
