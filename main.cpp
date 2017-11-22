@@ -144,6 +144,11 @@ gswalign(gssw_graph* graph,
     for (int i = 0; i < gm->cigar.length; ++i) {
         gssw_node* n = gm->cigar.elements[i].node;
         gssw_cigar* c = gm->cigar.elements[i].cigar;
+        // Change 'N' and 'X' operators to 'M'
+        // N is being calculated oddly in gssw, and is treated like M
+        if (c.type == 'N' || c.type == 'X') {
+            c.type = 'M';
+        }
         Cigar graph_relative_cigar = Cigar(c);
 
         //Cigar& ref_relative_cigar = cigars.at(n->id);
@@ -274,7 +279,7 @@ void construct_dag_and_align_single_sequence(Parameters& params) {
     if (!params.vcf_file.empty()) {
         vcffile.open(params.vcf_file);
         vcf::Variant var(vcffile);
-    
+
         vcffile.setRegion(params.target);
         while (vcffile.getNextVariant(var)) {
             if (var.position + var.ref.length() <= target.stopPos) {
@@ -371,7 +376,7 @@ bool shouldRealign(BamAlignment& alignment,
         }
         return true;
     }
-    
+
     if (alignment.CigarData.empty()) {
         cerr << "realigning because alignment " << alignment.Name << " @ " << alignment.Position
              << " has empty (or corrupted?) CIGAR" << endl;
@@ -425,7 +430,7 @@ void realign_bam(Parameters& params) {
     bool suppress_output = false;
 
     int dag_window_size = params.dag_window_size;
-    
+
     // open BAM file
     BamReader reader;
     if (!reader.Open("stdin")) {
@@ -662,8 +667,8 @@ void realign_bam(Parameters& params) {
                 cerr << "cannot realign against empty (all-N single node) graph" << endl;
             }
         }
-
-        if (!emptyDAG && shouldRealign(alignment, ref, dag_start_position, params, stats_before)) {
+        // Added check to see if there are any variants in the DAG, if not, skip the realign
+        if (!emptyDAG && shouldRealign(alignment, ref, dag_start_position, params, stats_before) && !variants.empty()) {
 
             ++total_realigned;
 
@@ -719,7 +724,7 @@ void realign_bam(Parameters& params) {
                         read = reverseComplement(trace_report.read);
                     }
                    */
- 
+
                     // TODO the qualities are not on the right side of the read
                     if (strand == "-" && alignment.IsMapped()) {
                         // if we're realigning, this is always true unless we swapped strands
@@ -812,7 +817,7 @@ void realign_bam(Parameters& params) {
                             // and if we have added gaps, we have added them to remove mismatches or softclips
                             && (stats_before.gaps >= stats_after.gaps // accept any time we reduce gaps while not increasing softclips/mismatches
                                 || (stats_before.gaps < stats_after.gaps // and allow gap increases when they improve the alignment
-                                    && (stats_before.softclip_qsum 
+                                    && (stats_before.softclip_qsum
                                         + stats_before.mismatch_qsum
                                         >
                                         stats_after.softclip_qsum
@@ -833,7 +838,7 @@ void realign_bam(Parameters& params) {
                     } else {
                         // reset to old version of alignment
                         if (params.debug) {
-                            cerr << "failed realignment of " << alignment.Name << " to graph, which it maps to with: " 
+                            cerr << "failed realignment of " << alignment.Name << " to graph, which it maps to with: "
                                  << stats_after.mismatch_qsum << "q in mismatches " << "(vs " << stats_before.mismatch_qsum << "q before), and "
                                  << stats_after.softclip_qsum << "q in soft clips " << "(vs " << stats_before.softclip_qsum << "q before) " << endl;
                         }
@@ -853,7 +858,7 @@ void realign_bam(Parameters& params) {
                 alignment = originalAlignment;
 
             }
-        }
+        } // End if shouldRealign
 
         // ensure correct order if alignments move
         long int maxOutputPos = initialAlignmentPosition - dag_window_size;
@@ -912,7 +917,7 @@ void realign_bam(Parameters& params) {
 }
 
 int main (int argc, char** argv) {
-    
+
     Parameters params(argc, argv);
 
     if (!params.read_input.empty()) {
