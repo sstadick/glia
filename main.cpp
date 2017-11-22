@@ -668,7 +668,16 @@ void realign_bam(Parameters& params) {
             }
         }
         // Added check to see if there are any variants in the DAG, if not, skip the realign
-        if (!emptyDAG && shouldRealign(alignment, ref, dag_start_position, params, stats_before) && !variants.empty()) {
+        bool depend_on_variants;
+        if (params.variants_only && !variants.empty()) {
+            depend_on_variants = true;
+        } else if (params.variants_only && variants.empty()) {
+            depend_on_variants = false;
+        } else { // we don't care anyways
+            depend_on_variants = true;
+        }
+
+        if (!emptyDAG && shouldRealign(alignment, ref, dag_start_position, params, stats_before) && depend_on_variants) {
 
             ++total_realigned;
 

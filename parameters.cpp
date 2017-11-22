@@ -1,6 +1,6 @@
 //
 //  parameters.cpp
-//  
+//
 //
 //  Created by Deniz Kural on 2/19/13.
 //
@@ -25,19 +25,19 @@ int levenshteinDistance(const std::string source, const std::string target) {
     if (m == 0) {
         return n;
     }
-    
+
     // Good form to declare a TYPEDEF
     typedef std::vector< std::vector<int> > Tmatrix;
-    
+
     Tmatrix matrix(n+1);
-    
+
     // Size the vectors in the 2.nd dimension. Unfortunately C++ doesn't
     // allow for allocation on declaration of 2.nd dimension of vec of vec
-    
+
     for (int i = 0; i <= n; i++) {
         matrix[i].resize(m+1);
     }
-    
+
     // Step 2
     for (int i = 0; i <= n; i++) {
         matrix[i][0]=i;
@@ -45,15 +45,15 @@ int levenshteinDistance(const std::string source, const std::string target) {
     for (int j = 0; j <= m; j++) {
         matrix[0][j]=j;
     }
-    
+
     // Step 3
     for (int i = 1; i <= n; i++) {
         const char s_i = source[i-1];
-        
+
         // Step 4
         for (int j = 1; j <= m; j++) {
             const char t_j = target[j-1];
-            
+
             // Step 5
             int cost;
             if (s_i == t_j) {
@@ -62,30 +62,30 @@ int levenshteinDistance(const std::string source, const std::string target) {
             else {
                 cost = 1;
             }
-            
+
             // Step 6
             const int above = matrix[i-1][j];
             const int left = matrix[i][j-1];
             const int diag = matrix[i-1][j-1];
             int cell = min( above + 1, min(left + 1, diag + cost));
-            
+
             // Step 6A: Cover transposition, in addition to deletion,
             // insertion and substitution. This step is taken from:
             // Berghel, Hal ; Roach, David : "An Extension of Ukkonen's
             // Enhanced Dynamic Programming ASM Algorithm"
             // (http://www.acm.org/~hlb/publications/asm/asm.html)
-            
+
             if (i>2 && j>2) {
                 int trans=matrix[i-2][j-2]+1;
                 if (source[i-2]!=t_j) trans++;
                 if (s_i!=target[j-2]) trans++;
                 if (cell>trans) cell = trans;
             }
-            
+
             matrix[i][j]=cell;
         }
     }
-    
+
     // Step 7
     return matrix[n][m];
 }
@@ -162,34 +162,35 @@ void Parameters::usage(char** argv) {
         << "    -O --only-realigned        Emit only realigned records (debugging)." << endl
         << "    -n --flatten-flank N       Use this many bp of dummy sequence when flattening large" << endl
         << "                               insertions into reference coordinates (default: 2)" << endl;
+        << "    -V --variants-only         Realign only reads that have variants within their DAG" << endl
 }
 
 
 Parameters::Parameters(int argc, char** argv) {
-    
+
     if (argc == 1) {
         simpleUsage(argv);
         exit(1);
     }
-    
+
     // record command line parameters
     commandline = argv[0];
     for (int i = 1; i < argc; ++i) {
         commandline += " ";
         commandline += argv[i];
     }
-    
+
     // set defaults
-    
+
     // i/o parameters:
     read_input = "";            // -s --sequence
     fastq_file = "";            // -q --fastq-file
     fasta_reference = "";                 // -f --fasta-reference
     target = "";                // -t --target
     vcf_file = "";              // -v --vcf-file
-    
+
     outputFile = "";            // -o --bam-output
-    
+
     // operation parameters
     useFile = false;            // -x --use-file
     alignReverse = false;        // -r --reverse-complement
@@ -223,9 +224,10 @@ Parameters::Parameters(int argc, char** argv) {
     flat_input_vcf = false;
     flatten_alignments = true;
     flatten_flank = 2;
-    
+    variants_only = false;
+
     int c; // counter for getopt
-    
+
     static struct option long_options[] =
     {
         {"help", no_argument, 0, 'h'},
@@ -259,16 +261,17 @@ Parameters::Parameters(int argc, char** argv) {
         {"unsorted-output", no_argument, 0, 'u'},
         {"flatten-flank", required_argument, 0, 'n'},
         {"flat-input-vcf", no_argument, 0, 'U'},
+        {"variants-only", required_argument, 0, 'V'},
         {0, 0, 0, 0}
-        
+
     };
-    
+
     while (true) {
         int option_index = 0;
         c = getopt_long(argc, argv,
-                        "hrXONBDFRuUds:q:f:t:v:o:g:x:m:M:w:Q:S:Z:E:G:n:C:L:",
+                        "hrXONBDFRVuUds:q:f:t:v:o:g:x:m:M:w:Q:S:Z:E:G:n:C:L:",
                         long_options, &option_index);
-        
+
         if (c == -1) // end of options
             break;
 
@@ -277,27 +280,27 @@ Parameters::Parameters(int argc, char** argv) {
         case 's':
             read_input = optarg;
             break;
-                
+
             // -q --fastq-file
         case 'q':
             fastq_file = optarg;
             break;
-                
+
             // -f --fasta-reference
         case 'f':
             fasta_reference = optarg;
             break;
-                
+
             // -t --target
         case 't':
             target = optarg;
             break;
-                
+
             // -v --vcf-file
         case 'v':
             vcf_file = optarg;
             break;
-                
+
             // -o --output-file
         case 'o':
             outputFile = optarg;
@@ -307,7 +310,7 @@ Parameters::Parameters(int argc, char** argv) {
         case 'u':
             unsorted_output = true;
             break;
-                
+
             // -r --reverse-complement
 	    case 'r':
             alignReverse = true;
@@ -346,25 +349,30 @@ Parameters::Parameters(int argc, char** argv) {
         case 'm':
             match = atoi(optarg);
             break;
-                
+
             // -M --mismatch
         case 'M':
 	        mism = atoi(optarg);
             break;
-                
+
             // -g --gap-open
         case 'g':
-            gap_open = atoi(optarg); 
+            gap_open = atoi(optarg);
             break;
 
             // -x --gap-extend
         case 'x':
-            gap_extend = atoi(optarg); 
+            gap_extend = atoi(optarg);
             break;
 
             // -R --realign-bam
         case 'R':
             realign_bam = true;
+            break;
+
+            // -V --variants-only
+        case 'V':
+            variants_only = true;
             break;
 
         case 'F':
@@ -411,13 +419,13 @@ Parameters::Parameters(int argc, char** argv) {
         case 'w':
             dag_window_size = atoi(optarg);
             break;
-                
+
             // -h --help
         case 'h':
             usage(argv);
             exit(0);
             break;
-                
+
         case '?': // print a suggestion about the most-likely long option which the argument matches
         {
             string bad_arg(argv[optind - 1]);
@@ -442,17 +450,17 @@ Parameters::Parameters(int argc, char** argv) {
             abort ();
         }
     }
-    
-    
+
+
     // TODO:  Add a lot more of this stuff.
     if (fasta_reference == "") {
         cerr << "Please specify a fasta reference file." << endl;
         exit(1);
     }
-    
+
     if (useFile == true && fastq_file == "") {
         cerr << "Please specify a fastq input file." << endl;
     }
-    
+
 }
 
