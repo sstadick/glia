@@ -268,7 +268,7 @@ gssw_alignment_end* gssw_sw_sse2_byte (const int8_t* ref,
 
 			/* Save vH values. */
 			_mm_store_si128(pvHStore + j, vH);
-			
+
 			/* Save the vE and vF values they derived from */
 			_mm_store_si128(pvEStore + j, e);
 			_mm_store_si128(pvFStore + j, vF);
@@ -370,7 +370,7 @@ gssw_alignment_end* gssw_sw_sse2_byte (const int8_t* ref,
             }
             //fprintf(stderr, "\n");
         }
-        
+
         // Save E
         //fprintf(stdout, "%i %i\n", i, j);
         for (j = 0; LIKELY(j < segLen); ++j) {
@@ -383,7 +383,7 @@ gssw_alignment_end* gssw_sw_sse2_byte (const int8_t* ref,
             }
             //fprintf(stderr, "\n");
         }
-        
+
         // Save F
         //fprintf(stdout, "%i %i\n", i, j);
         for (j = 0; LIKELY(j < segLen); ++j) {
@@ -404,7 +404,7 @@ gssw_alignment_end* gssw_sw_sse2_byte (const int8_t* ref,
 		//if (maxColumn[i] == terminate) break;
 
 	}
-        
+
     //fprintf(stderr, "%p %p %p %p %p %p\n", *pmH, mH, pvHmax, pvE, pvHLoad, pvHStore);
     // save the last vH
     memcpy(alignment->seed.pvE,      pvE,      segLen*sizeof(__m128i));
@@ -475,7 +475,7 @@ gssw_alignment_end* gssw_sw_sse2_word (const int8_t* ref,
                                        int32_t maskLen,
                                        gssw_align* alignment, /* to save seed and matrix */
                                        const gssw_seed* seed) {     /* to seed the alignment */
-    
+
 
 	uint16_t max = 0;		                     /* the max alignment score */
 	int32_t end_read = readLen - 1;
@@ -590,7 +590,7 @@ gssw_alignment_end* gssw_sw_sse2_word (const int8_t* ref,
 
 			/* Save vH values. */
 			_mm_store_si128(pvHStore + j, vH);
-			
+
 			/* Save the vE and vF values they derived from */
 			_mm_store_si128(pvEStore + j, e);
 			_mm_store_si128(pvFStore + j, vF);
@@ -617,14 +617,14 @@ gssw_alignment_end* gssw_sw_sse2_word (const int8_t* ref,
 				vH = _mm_load_si128(pvHStore + j);
 				vH = _mm_max_epi16(vH, vF);
 				_mm_store_si128(pvHStore + j, vH);
-				
+
 				// Save the stripe of the F matrix
                 // Only add in better F scores. Sometimes during this loop we'll
                 // recompute worse ones.
                 vTemp = _mm_load_si128 (pvFStore + j);
                 vTemp = _mm_max_epi16 (vTemp, vF);
                 _mm_store_si128(pvFStore + j, vTemp);
-				
+
 				vH = _mm_subs_epu16(vH, vGapO);
 				vF = _mm_subs_epu16(vF, vGapE);
 				if (UNLIKELY(! _mm_movemask_epi8(_mm_cmpgt_epi16(vF, vH)))) goto end;
@@ -649,9 +649,9 @@ end:
 		}
 
         /* save current column */
-        
+
         // Do the un-swizzling of the stripes.
-        
+
         // H matrix
         for (j = 0; LIKELY(j < segLen); ++j) {
             uint16_t* t;
@@ -663,7 +663,7 @@ end:
             }
             //fprintf(stdout, "\n");
         }
-        
+
         // E matrix
         for (j = 0; LIKELY(j < segLen); ++j) {
             uint16_t* t;
@@ -675,7 +675,7 @@ end:
             }
             //fprintf(stdout, "\n");
         }
-        
+
         // F matrix
         for (j = 0; LIKELY(j < segLen); ++j) {
             uint16_t* t;
@@ -1011,22 +1011,22 @@ gssw_cigar* gssw_alignment_trace_back_byte (gssw_align* alignment,
     // And the two matrices for gaps
     uint8_t* mE = (uint8_t*)alignment->mE;
     uint8_t* mF = (uint8_t*)alignment->mF;
-    
+
     // i, j are where we are currently in the reference and the read
     int32_t i = *refEnd;
     int32_t j = *readEnd;
-    
+
     // These let us know if we're currently supposed to be in a gap, waiting for
     // the gap open that ought to open it.
     int32_t gRead = *readGapFlag; // If set we're in E actually
     int32_t gRef = *refGapFlag; // If set we're in F actually
-    
+
     // This here variable holds the score that the current cell got from the DP
     // step. We'll look at the surrounding cells to work out which way we came
     // from to get this score here. We'll also update it in case we're the last
     // thing on this node and we take it along as the score to be at on the
     // other node (??)
-    
+
     uint16_t scoreHere;
     if(gRead) {
         // we're in mE
@@ -1038,44 +1038,44 @@ gssw_cigar* gssw_alignment_trace_back_byte (gssw_align* alignment,
         // We're in the main matrix mH
         scoreHere = mH[readLen*i + j];
     }
-    
+
     // Start a CIGAR to hold the traceback.
 	gssw_cigar* result = (gssw_cigar*)calloc(1, sizeof(gssw_cigar));
     result->length = 0;
 
     while (LIKELY(scoreHere > 0 && i >= 0 && j >= 0)) {
         // We're not out of score, and we're not off the left or top of the matrix
-    
+
 #ifdef DEBUG_TRACEBACK
         fprintf(stderr, "score=%i at %i,%i with %c vs %c, gRef=%i gRead=%i\n", scoreHere, i, j, ref[i], read[j], gRef, gRead);
 #endif
-    
+
         if(gRead) {
             // We're in E
-            
+
             // If we're in a gap matrix, see if we can leave the gap here (i.e.
             // gap open score is consistent). If so, do it. Otherwise, extend
             // the gap.
             if(i > 0 && mH[readLen*(i - 1) +  j] - gap_open == scoreHere) {
                 // We are consistent with a gap open, bringing us back to the
                 // main matrix. Take it.
-                
+
                 // D = gap in read
                 gssw_cigar_push_back(result, 'D', 1);
-                
+
                 // Fix score
                 scoreHere += gap_open;
-                
+
                 // Move in the reference
                 --i;
-                
+
                 // Go back to the main matrix
                 gRead = 0;
-                
+
 #ifdef DEBUG_TRACEBACK
                 fprintf(stderr, "Read gap open\n");
 #endif
-                
+
             } else if(i > 0 && mE[readLen*(i - 1) +  j] - gap_extension == scoreHere) {
                 // We are consistent with a gap extend
                 gssw_cigar_push_back(result, 'D', 1);
@@ -1103,16 +1103,16 @@ gssw_cigar* gssw_alignment_trace_back_byte (gssw_align* alignment,
             if(j > 0 && mH[readLen*i +  (j - 1)] - gap_open == scoreHere) {
                 // We are consistent with a gap open, bringing us back to the
                 // main matrix. Take it.
-                
+
                 // I = gap in ref
                 gssw_cigar_push_back(result, 'I', 1);
-                
+
                 // Fix score
                 scoreHere += gap_open;
-                
+
                 // Move in the read
                 --j;
-                
+
                 // Go back to the main matrix
                 gRef = 0;
 #ifdef DEBUG_TRACEBACK
@@ -1139,12 +1139,12 @@ gssw_cigar* gssw_alignment_trace_back_byte (gssw_align* alignment,
             }
         } else {
             // We're in H
-            
+
             // If we're in the main matrix, see if we can do a match, mismatch,
             // or N-match. If so, do it.
             if(i > 0 && j > 0 && mH[readLen*(i-1) + (j-1)] == scoreHere && (ref[i] == 'N' || read[j] == 'N')) {
                 // This is an N-match.
-                gssw_cigar_push_back(result, 'N', 1);
+                gssw_cigar_push_back(result, 'M', 1);
                 // Leave score unchanged
                 --i; --j;
 #ifdef DEBUG_TRACEBACK
@@ -1160,7 +1160,7 @@ gssw_cigar* gssw_alignment_trace_back_byte (gssw_align* alignment,
 #endif
             } else if(i > 0 && j > 0 && mH[readLen*(i-1) + (j-1)] - mismatch == scoreHere && ref[i] != read[j]) {
                 // This is a mismatch
-                gssw_cigar_push_back(result, 'X', 1);
+                gssw_cigar_push_back(result, 'M', 1);
                 scoreHere += mismatch;
                 --i; --j;
 #ifdef DEBUG_TRACEBACK
@@ -1189,7 +1189,7 @@ gssw_cigar* gssw_alignment_trace_back_byte (gssw_align* alignment,
             } else if(i == 0) {
                 // We can't go anywhere, but we're at the left edge, so maybe we
                 // can go to a previous node diagonally. Just let it slide.
-#ifdef DEBUG_TRACEBACK                
+#ifdef DEBUG_TRACEBACK
                 fprintf(stderr, "Match/mismatch out left edge\n");
 #endif
                 break;
@@ -1198,7 +1198,7 @@ gssw_cigar* gssw_alignment_trace_back_byte (gssw_align* alignment,
                 fprintf(stderr, "error:[gssw] Stuck in main matrix!\n");
                 assert(0);
             }
-            
+
         }
     }
 
@@ -1235,22 +1235,22 @@ gssw_cigar* gssw_alignment_trace_back_word (gssw_align* alignment,
     // And the two matrices for gaps
     uint16_t* mE = (uint16_t*)alignment->mE;
     uint16_t* mF = (uint16_t*)alignment->mF;
-    
+
     // i, j are where we are currently in the reference and the read
     int32_t i = *refEnd;
     int32_t j = *readEnd;
-    
+
     // These let us know if we're currently supposed to be in a gap, waiting for
     // the gap open that ought to open it.
     int32_t gRead = *readGapFlag; // If set we're in E actually
     int32_t gRef = *refGapFlag; // If set we're in F actually
-    
+
     // This here variable holds the score that the current cell got from the DP
     // step. We'll look at the surrounding cells to work out which way we came
     // from to get this score here. We'll also update it in case we're the last
     // thing on this node and we take it along as the score to be at on the
     // other node (??)
-    
+
     uint16_t scoreHere;
     if(gRead) {
         // we're in mE
@@ -1262,53 +1262,53 @@ gssw_cigar* gssw_alignment_trace_back_word (gssw_align* alignment,
         // We're in the main matrix mH
         scoreHere = mH[readLen*i + j];
     }
-    
+
     // Start a CIGAR to hold the traceback.
 	gssw_cigar* result = (gssw_cigar*)calloc(1, sizeof(gssw_cigar));
     result->length = 0;
 
     while (LIKELY(scoreHere > 0 && i >= 0 && j >= 0)) {
         // We're not out of score, and we're not off the left or top of the matrix
-    
+
         // We think differently than we did creating the matrix. When creating
         // the matrix, we care about the relative scores, because we want to
         // come from the places giving the best score.
-        
+
         // When computing the traceback, the scores are already determined, and
         // only some places to come from are consistent with the facts. We can
         // just see what's consistent, and then pick the "best" consistent
         // thing, according to fixed priorities.
-    
+
         if(gRead) {
             // We're in E
-            
+
             // If we're in a gap matrix, see if we can leave the gap here (i.e.
             // gap open score is consistent). If so, do it. Otherwise, extend
             // the gap.
             if(i > 0 && mH[readLen*(i - 1) +  j] - gap_open == scoreHere) {
                 // We are consistent with a gap open, bringing us back to the
                 // main matrix. Take it.
-                
+
                 // D = gap in read
                 gssw_cigar_push_back(result, 'D', 1);
-                
+
                 // Fix score
                 scoreHere += gap_open;
-                
+
                 // Move in the reference
                 --i;
-                
+
                 // Go back to the main matrix
                 gRead = 0;
-                
+
                 //fprintf(stderr, "Read gap open\n");
-                
+
             } else if(i > 0 && mE[readLen*(i - 1) +  j] - gap_extension == scoreHere) {
                 // We are consistent with a gap extend
                 gssw_cigar_push_back(result, 'D', 1);
                 scoreHere += gap_extension;
                 --i;
-                
+
                 //fprintf(stderr, "Read gap extend\n");
             } else if(i == 0) {
                 // We are in a gap and at the very left edge. We need to look
@@ -1327,19 +1327,19 @@ gssw_cigar* gssw_alignment_trace_back_word (gssw_align* alignment,
             if(j > 0 && mH[readLen*i +  (j - 1)] - gap_open == scoreHere) {
                 // We are consistent with a gap open, bringing us back to the
                 // main matrix. Take it.
-                
+
                 // I = gap in ref
                 gssw_cigar_push_back(result, 'I', 1);
-                
+
                 // Fix score
                 scoreHere += gap_open;
-                
+
                 // Move in the read
                 --j;
-                
+
                 // Go back to the main matrix
                 gRef = 0;
-                
+
                 //fprintf(stderr, "Ref gap open\n");
             } else if(j > 0 && mF[readLen*i + (j - 1)] - gap_extension == scoreHere) {
                 // We are consistent with a gap extend
@@ -1360,16 +1360,16 @@ gssw_cigar* gssw_alignment_trace_back_word (gssw_align* alignment,
             }
         } else {
             // We're in H
-            
+
             // If we're in the main matrix, see if we can do a match, mismatch,
             // or N-match. If so, do it.
             if(i > 0 && j > 0 && mH[readLen*(i-1) + (j-1)] == scoreHere && (ref[i] == 'N' || read[j] == 'N')) {
                 // This is an N-match.
-                gssw_cigar_push_back(result, 'N', 1);
+                gssw_cigar_push_back(result, 'M', 1);
                 // Leave score unchanged
                 --i; --j;
                 //fprintf(stderr, "N-match\n");
-                
+
             } else if(i > 0 && j > 0 && mH[readLen*(i-1) + (j-1)] + match == scoreHere && ref[i] == read[j]) {
                 // This is a match
                 gssw_cigar_push_back(result, 'M', 1);
@@ -1378,7 +1378,7 @@ gssw_cigar* gssw_alignment_trace_back_word (gssw_align* alignment,
                 //fprintf(stderr, "Match\n");
             } else if(i > 0 && j > 0 && mH[readLen*(i-1) + (j-1)] - mismatch == scoreHere && ref[i] != read[j]) {
                 // This is a mismatch
-                gssw_cigar_push_back(result, 'X', 1);
+                gssw_cigar_push_back(result, 'M', 1);
                 scoreHere += mismatch;
                 --i; --j;
                 //fprintf(stderr, "Mismatch\n");
@@ -1517,7 +1517,7 @@ gssw_graph_mapping* gssw_graph_trace_back (gssw_graph* graph,
     // Make a graph and get its cigar
     gssw_graph_mapping* gm = gssw_graph_mapping_create();
     gssw_graph_cigar* gc = &gm->cigar;
-    
+
     // The cigar needs to double every so often so it is big enough. This is how
     // long is thould be to start.
     uint32_t graph_cigar_bufsiz = 16;
@@ -1533,19 +1533,19 @@ gssw_graph_mapping* gssw_graph_trace_back (gssw_graph* graph,
         fprintf(stderr, "error:[gssw] You must call graph_fill(...) before tracing back.\n");
         exit(1);
     }
-    
+
     // And the score that we have there
     uint16_t score = n->alignment->score1;
     gm->score = score;
-    
+
     // Are we using bytes, or did we have to do shorts?
     uint8_t score_is_byte = gssw_is_byte(n->alignment);
-    
+
     // Where in the reference and the read is the best place to trace back from
     // in this node?
     int32_t refEnd = n->alignment->ref_end1;
     int32_t readEnd = n->alignment->read_end1;
-    
+
     // We keep flags indicating if we're tracing along a gap in the reference or
     // a gap in the read. TODO: the gap in the reference flag doesn't really
     // need to be out here, because a gap in the reference by nature can't cross
@@ -1605,7 +1605,7 @@ gssw_graph_mapping* gssw_graph_trace_back (gssw_graph* graph,
             gssw_cigar_push_back(nc->cigar, 'S', end_soft_clip);
             end_soft_clip = 0;
         }
-        
+
         nc->node = n;
         ++gc->length;
 #ifdef DEBUG_TRACEBACK
@@ -1637,12 +1637,12 @@ gssw_graph_mapping* gssw_graph_trace_back (gssw_graph* graph,
             exit(1);
         }
         */
-        
+
         // so check its inbound nodes at the given read end position
         int32_t i;
         // We'll fill this in with the best node we find to go into
         gssw_node* best_prev = NULL;
-        
+
         // determine direction across edge
 
         // Note that we need to push_front on our CIGAR here. TODO: this is
@@ -1659,36 +1659,36 @@ gssw_graph_mapping* gssw_graph_trace_back (gssw_graph* graph,
             for (i = 0; i < n->count_prev; ++i) {
                 // Consider each node we could have come from
                 gssw_node* cn = n->prev[i];
-                
+
                 // If we were to match/mismatch, what characters are we comparing?
                 char refChar = n->seq[refEnd];
                 char readChar = read[readEnd];
-                
+
                 // What if we came diagonally on a match or mismatch? What score would we come from?
                 uint8_t diagonalSourceScore = ((uint8_t*)cn->alignment->mH)[readLen*(cn->len-1) + (readEnd-1)];
-                
+
                 // What if we came from the left, on a gap open in the read?
                 uint8_t gapOpenSourceScore = ((uint8_t*)cn->alignment->mH)[readLen*(cn->len-1) + readEnd];
-                
+
                 // And what if we came on a gap extend instead?
                 uint8_t gapExtendSourceScore = ((uint8_t*)cn->alignment->mE)[readLen*(cn->len-1) + readEnd];
-                
+
                 // If we could have entered a read gap before leaving our last
                 // node, we would have.
-                
+
 #ifdef DEBUG_TRACEBACK
                 fprintf(stderr, "Consider prev node %p with score %i, %c vs %c, %i diagonal, %i open, %i extend\n", cn, score, refChar, readChar, diagonalSourceScore, gapOpenSourceScore, gapExtendSourceScore);
 #endif
-                
+
                 if(!gapInRead) {
                     // If we're not in a gap...
                     if(diagonalSourceScore == score && (refChar == 'N' || readChar == 'N')) {
                         // We're consistent with an N-match
-                        
+
                         // Go to that node (which consumes a ref character), and
                         // consume a read character
                         best_prev = cn;
-                        gssw_cigar_push_front(nc->cigar, 'N', 1);
+                        gssw_cigar_push_front(nc->cigar, 'M', 1);
                         --readEnd;
 #ifdef DEBUG_TRACEBACK
                         fprintf(stderr, "N-match across nodes to %p\n", cn);
@@ -1696,7 +1696,7 @@ gssw_graph_mapping* gssw_graph_trace_back (gssw_graph* graph,
                         break;
                     } else if(diagonalSourceScore + match == score && refChar == readChar) {
                         // Then try a match
-                        
+
                         // Go to that node (which consumes a ref character), and
                         // consume a read character
                         best_prev = cn;
@@ -1709,11 +1709,11 @@ gssw_graph_mapping* gssw_graph_trace_back (gssw_graph* graph,
                         break;
                     } else if(diagonalSourceScore - mismatch == score && refChar != readChar) {
                         // Then try a mismatch
-                        
+
                         // Go to that node (which consumes a ref character), and
                         // consume a read character
                         best_prev = cn;
-                        gssw_cigar_push_front(nc->cigar, 'X', 1);
+                        gssw_cigar_push_front(nc->cigar, 'M', 1);
                         score += mismatch;
                         --readEnd;
 #ifdef DEBUG_TRACEBACK
@@ -1721,16 +1721,16 @@ gssw_graph_mapping* gssw_graph_trace_back (gssw_graph* graph,
 #endif
                         break;
                     }
-                    
+
                     // A match starting the alignment should have been taken
                     // care of in the within-node function.
-                    
+
                     // If none of those work, try the next option for the previous
                     // node.
                 } else {
-                
+
                     // If we are in a gap, it would have been a last resort in the node's traceback.
-                    
+
                     if(gapOpenSourceScore - gap_open == score) {
                         // This node is consistent with an open. Take it.
                         best_prev = cn;
@@ -1764,36 +1764,36 @@ gssw_graph_mapping* gssw_graph_trace_back (gssw_graph* graph,
             for (i = 0; i < n->count_prev; ++i) {
                 // Consider each node we could have come from
                 gssw_node* cn = n->prev[i];
-                
+
                 // If we were to match/mismatch, what characters are we comparing?
                 char refChar = n->seq[refEnd];
                 char readChar = read[readEnd];
-                
+
                 // What if we came diagonally on a match or mismatch? What score would we come from?
                 uint16_t diagonalSourceScore = ((uint16_t*)cn->alignment->mH)[readLen*(cn->len-1) + (readEnd-1)];
-                
+
                 // What if we came from the left, on a gap open in the read?
                 uint16_t gapOpenSourceScore = ((uint16_t*)cn->alignment->mH)[readLen*(cn->len-1) + readEnd];
-                
+
                 // And what if we came on a gap extend instead?
                 uint16_t gapExtendSourceScore = ((uint16_t*)cn->alignment->mE)[readLen*(cn->len-1) + readEnd];
-                
+
                 // If we could have entered a read gap before leaving our last
                 // node, we would have.
-                
+
 #ifdef DEBUG_TRACEBACK
                 fprintf(stderr, "Consider prev node %p with score %i, %c vs %c, %i diagonal, %i open, %i extend\n", cn, score, refChar, readChar, diagonalSourceScore, gapOpenSourceScore, gapExtendSourceScore);
 #endif
-                
+
                 if(!gapInRead) {
                     // If we're not in a gap...
                     if(diagonalSourceScore == score && (refChar == 'N' || readChar == 'N')) {
                         // We're consistent with an N-match
-                        
+
                         // Go to that node (which consumes a ref character), and
                         // consume a read character
                         best_prev = cn;
-                        gssw_cigar_push_front(nc->cigar, 'N', 1);
+                        gssw_cigar_push_front(nc->cigar, 'M', 1);
                         --readEnd;
 #ifdef DEBUG_TRACEBACK
                         fprintf(stderr, "N-match across nodes to %p\n", cn);
@@ -1801,7 +1801,7 @@ gssw_graph_mapping* gssw_graph_trace_back (gssw_graph* graph,
                         break;
                     } else if(diagonalSourceScore + match == score && refChar == readChar) {
                         // Then try a match
-                        
+
                         // Go to that node (which consumes a ref character), and
                         // consume a read character
                         best_prev = cn;
@@ -1814,11 +1814,11 @@ gssw_graph_mapping* gssw_graph_trace_back (gssw_graph* graph,
                         break;
                     } else if(diagonalSourceScore - mismatch == score && refChar != readChar) {
                         // Then try a mismatch
-                        
+
                         // Go to that node (which consumes a ref character), and
                         // consume a read character
                         best_prev = cn;
-                        gssw_cigar_push_front(nc->cigar, 'X', 1);
+                        gssw_cigar_push_front(nc->cigar, 'M', 1);
                         score += mismatch;
                         --readEnd;
 #ifdef DEBUG_TRACEBACK
@@ -1826,16 +1826,16 @@ gssw_graph_mapping* gssw_graph_trace_back (gssw_graph* graph,
 #endif
                         break;
                     }
-                    
+
                     // A match starting the alignment should have been taken
                     // care of in the within-node function.
-                    
+
                     // If none of those work, try the next option for the previous
                     // node.
                 } else {
-                
+
                     // If we are in a gap, it would have been a last resort in the node's traceback.
-                    
+
                     if(gapOpenSourceScore - gap_open == score) {
                         // This node is consistent with an open. Take it.
                         best_prev = cn;
@@ -1865,29 +1865,29 @@ gssw_graph_mapping* gssw_graph_trace_back (gssw_graph* graph,
                 assert(0);
             }
         }
-        
+
 #ifdef DEBUG_TRACEBACK
         fprintf(stderr, "best_prev = %p, node = %p\n", best_prev, n);
 #endif
         if (best_prev) {
             // Update everything to move to the chosen node
-    
+
             // Score was laready taken care of, as was readEnd, since they
             // depend on the path taken.
-    
+
             n = best_prev;
             // update ref end repeat
             refEnd = n->len - 1;
             ++nc;
         } else {
             // Couldn't find somewhere to go
-            
+
             if(score > 0) {
                 fprintf(stderr, "error:[gssw] Could not find a node to go to!\n");
                 assert(0);
             }
 
-#ifdef DEBUG_TRACEBACK            
+#ifdef DEBUG_TRACEBACK
             fprintf(stderr, "soft clip of %i\n", readEnd+1);
 #endif
             if (readEnd > -1) {
@@ -1901,7 +1901,7 @@ gssw_graph_mapping* gssw_graph_trace_back (gssw_graph* graph,
 #ifdef DEBUG_TRACEBACK
     fprintf(stderr, "at end of traceback loop\n");
 #endif
-    
+
     gssw_reverse_graph_cigar(gc);
 
     gm->position = (refEnd +1 < 0 ? 0 : refEnd +1); // drop last step by -1 on ref position
@@ -2268,7 +2268,7 @@ gssw_node_fill (gssw_node* node,
     // and build up a new one
     node->alignment = alignment = gssw_align_create();
 
-    
+
     // if we have parents, we should generate a new seed as the max of each vector
     // if one of the parents has moved into uint16_t space, we need to account for this
     // otherwise, just use the single parent alignment result as seed
