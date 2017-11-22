@@ -523,6 +523,7 @@ void realign_bam(Parameters& params) {
 
         BamAlignment originalAlignment = alignment;
         long unsigned int initialAlignmentPosition = alignment.Position;
+        bool variants_in_dag = false;
         //if (dag_start_position == 1) {
         //    dag_start_position = max(1, (int)initialAlignmentPosition - dag_window_size/2);
         //}
@@ -596,7 +597,7 @@ void realign_bam(Parameters& params) {
                 }
 
             }
-
+            variants_in_dag = variants.empty();
             //cerr << "dag_start_position " << dag_start_position << endl;
             ref = reference.getSubSequence(seqname,
                                            max((long int) 0, dag_start_position),
@@ -669,9 +670,9 @@ void realign_bam(Parameters& params) {
         }
         // Added check to see if there are any variants in the DAG, if not, skip the realign
         bool depend_on_variants;
-        if (params.variants_only && !variants.empty()) {
+        if (params.variants_only && !variants_in_dag) {
             depend_on_variants = true;
-        } else if (params.variants_only && variants.empty()) {
+        } else if (params.variants_only && variants_in_dag) {
             depend_on_variants = false;
         } else { // we don't care anyways
             depend_on_variants = true;
